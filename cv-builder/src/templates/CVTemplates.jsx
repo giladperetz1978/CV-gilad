@@ -728,6 +728,314 @@ export function BoldTemplate({ data }) {
   )
 }
 
+export function TechTemplate({ data }) {
+  if (!data) return null
+  const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
+
+  const bg = '#0f172a'
+  const surface = '#1e293b'
+  const cyan = '#06b6d4'
+  const cyanDim = '#0e7490'
+  const cyanBg = '#083344'
+  const textLight = '#94a3b8'
+  const textWhite = '#e2e8f0'
+
+  const sectionStyle = { fontSize: '11px', fontWeight: 700, color: cyan, textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: '22px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }
+  const line = <span style={{ flex: 1, height: '1px', backgroundColor: '#334155' }}></span>
+  const textStyle = { fontSize: '11.5px', color: textLight, lineHeight: '1.65', margin: 0 }
+  const titleStyle = { fontSize: '12.5px', fontWeight: 700, color: textWhite, margin: 0 }
+
+  return (
+    <div style={{ fontFamily: 'Heebo, Arial, sans-serif', direction: 'rtl', backgroundColor: bg, color: textLight, minHeight: '100%' }}>
+      <div style={{ padding: '32px', borderBottom: `1px solid #334155` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div>
+            {personalInfo.fullName && <h1 style={{ fontSize: '26px', fontWeight: 800, color: textWhite, margin: '0 0 4px' }}>{personalInfo.fullName}</h1>}
+            {personalInfo.title && <p style={{ fontSize: '14px', color: cyan, fontWeight: 500, margin: 0 }}>{personalInfo.title}</p>}
+          </div>
+          <div style={{ textAlign: 'left', fontSize: '11px', color: textLight }}>
+            {personalInfo.email && <p style={{ margin: '0 0 2px' }} dir="ltr">{personalInfo.email}</p>}
+            {personalInfo.phone && <p style={{ margin: '0 0 2px' }} dir="ltr">{personalInfo.phone}</p>}
+            {personalInfo.address && <p style={{ margin: 0 }}>{personalInfo.address}</p>}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ padding: '24px 32px' }}>
+        {personalInfo.summary && (
+          <div style={{ backgroundColor: cyanBg, border: `1px solid ${cyanDim}40`, borderRadius: '8px', padding: '14px 16px', marginBottom: '8px' }}>
+            <p style={{ ...textStyle, color: '#cbd5e1' }}>{personalInfo.summary}</p>
+          </div>
+        )}
+
+        {skills?.length > 0 && skills.some(s => s?.trim()) && (
+          <><h2 style={sectionStyle}><span>Stack</span>{line}</h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {skills.filter(s => s?.trim()).map((skill, idx) => (
+              <span key={idx} style={{ padding: '4px 12px', backgroundColor: surface, color: cyan, border: `1px solid ${cyanDim}40`, borderRadius: '6px', fontSize: '10.5px', fontWeight: 600 }}>{skill}</span>
+            ))}
+          </div></>
+        )}
+
+        {experience?.length > 0 && experience.some(e => e.position || e.company) && (
+          <><h2 style={sectionStyle}><span>ניסיון</span>{line}</h2>
+          {experience.map((exp, idx) => {
+            if (!exp.position && !exp.company) return null
+            return (
+              <div key={idx} style={{ marginBottom: '14px', paddingRight: '14px', borderRight: `2px solid ${cyan}` }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <p style={titleStyle}>{exp.position}</p>
+                    {exp.company && <p style={{ fontSize: '11px', color: cyan, margin: 0 }}>{exp.company}</p>}
+                  </div>
+                  <span style={{ fontSize: '10px', color: textLight, backgroundColor: surface, padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace' }} dir="ltr">
+                    {exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' → '}{exp.current ? 'now' : exp.endDate}
+                  </span>
+                </div>
+                {exp.description && <p style={{ ...textStyle, marginTop: '4px' }}>{exp.description}</p>}
+              </div>
+            )
+          })}</>
+        )}
+
+        {education?.length > 0 && education.some(e => e.degree || e.institution) && (
+          <><h2 style={sectionStyle}><span>השכלה</span>{line}</h2>
+          {education.map((edu, idx) => {
+            if (!edu.degree && !edu.institution) return null
+            return (
+              <div key={idx} style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={titleStyle}>{edu.degree}{edu.field ? ` — ${edu.field}` : ''}</p>
+                  {edu.institution && <p style={{ fontSize: '11px', color: cyan, margin: 0 }}>{edu.institution}</p>}
+                </div>
+                <span style={{ fontSize: '10px', color: textLight, fontFamily: 'monospace' }} dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && '–'}{edu.endDate}</span>
+              </div>
+            )
+          })}</>
+        )}
+
+        <div style={{ display: 'flex', gap: '32px', marginTop: '8px' }}>
+          {languages?.length > 0 && languages.some(l => l.language) && (
+            <div style={{ flex: 1 }}><h2 style={sectionStyle}><span>שפות</span>{line}</h2>
+            {languages.filter(l => l.language).map((lang, idx) => (
+              <p key={idx} style={{ ...textStyle, marginBottom: '2px' }}><strong style={{ color: textWhite }}>{lang.language}</strong>{lang.level && ` — ${lang.level}`}</p>
+            ))}</div>
+          )}
+          {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
+            <div style={{ flex: 1 }}><h2 style={sectionStyle}><span>הסמכות</span>{line}</h2>
+            {certifications.filter(c => c?.trim()).map((c, i) => (
+              <p key={i} style={{ ...textStyle, marginBottom: '2px' }}>› {c}</p>
+            ))}</div>
+          )}
+        </div>
+
+        {military && (<><h2 style={sectionStyle}><span>שירות צבאי</span>{line}</h2><p style={textStyle}>{military}</p></>)}
+        {volunteer && (<><h2 style={sectionStyle}><span>התנדבות</span>{line}</h2><p style={textStyle}>{volunteer}</p></>)}
+      </div>
+    </div>
+  )
+}
+
+export function GradientTemplate({ data }) {
+  if (!data) return null
+  const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
+
+  const rose = '#e11d48'
+  const orange = '#ea580c'
+  const roseBg = '#fff1f2'
+  const textStyle = { fontSize: '12px', color: '#52525b', lineHeight: '1.65', margin: 0 }
+  const titleStyle = { fontSize: '13px', fontWeight: 700, color: '#18181b', margin: 0 }
+  const sectionStyle = { fontSize: '14px', fontWeight: 800, color: '#18181b', marginTop: '20px', marginBottom: '10px' }
+
+  return (
+    <div style={{ fontFamily: 'Heebo, Arial, sans-serif', direction: 'rtl', backgroundColor: '#ffffff' }}>
+      <div style={{ background: `linear-gradient(135deg, ${rose}, ${orange})`, padding: '36px 32px', borderRadius: '0 0 32px 32px', color: '#ffffff' }}>
+        {personalInfo.fullName && <h1 style={{ fontSize: '28px', fontWeight: 900, margin: '0 0 4px', color: '#ffffff' }}>{personalInfo.fullName}</h1>}
+        {personalInfo.title && <p style={{ fontSize: '14px', fontWeight: 400, color: '#fecdd3', margin: '0 0 16px' }}>{personalInfo.title}</p>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '11px', color: '#fecdd3' }}>
+          {personalInfo.email && <span dir="ltr">✉ {personalInfo.email}</span>}
+          {personalInfo.phone && <span dir="ltr">📞 {personalInfo.phone}</span>}
+          {personalInfo.address && <span>📍 {personalInfo.address}</span>}
+        </div>
+      </div>
+
+      <div style={{ padding: '28px 32px' }}>
+        {personalInfo.summary && (
+          <div style={{ backgroundColor: roseBg, borderRadius: '16px', padding: '16px 18px', marginBottom: '8px' }}>
+            <p style={{ ...textStyle, color: '#3f3f46' }}>{personalInfo.summary}</p>
+          </div>
+        )}
+
+        {experience?.length > 0 && experience.some(e => e.position || e.company) && (
+          <><h2 style={sectionStyle}>ניסיון תעסוקתי</h2>
+          {experience.map((exp, idx) => {
+            if (!exp.position && !exp.company) return null
+            return (
+              <div key={idx} style={{ marginBottom: '14px', paddingRight: '14px', borderRight: `3px solid ${rose}`, borderRadius: '0 8px 8px 0', backgroundColor: idx % 2 === 0 ? '#fafafa' : '#ffffff', padding: '10px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <p style={titleStyle}>{exp.position}</p>
+                    {exp.company && <p style={{ fontSize: '11px', color: rose, fontWeight: 600, margin: 0 }}>{exp.company}</p>}
+                  </div>
+                  <span style={{ fontSize: '10px', color: '#a1a1aa', backgroundColor: roseBg, padding: '3px 10px', borderRadius: '12px' }} dir="ltr">
+                    {exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}
+                  </span>
+                </div>
+                {exp.description && <p style={{ ...textStyle, marginTop: '5px' }}>{exp.description}</p>}
+              </div>
+            )
+          })}</>
+        )}
+
+        {education?.length > 0 && education.some(e => e.degree || e.institution) && (
+          <><h2 style={sectionStyle}>השכלה</h2>
+          {education.map((edu, idx) => {
+            if (!edu.degree && !edu.institution) return null
+            return (
+              <div key={idx} style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                <div>
+                  <p style={titleStyle}>{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
+                  {edu.institution && <p style={{ fontSize: '11px', color: rose, fontWeight: 500, margin: 0 }}>{edu.institution}</p>}
+                </div>
+                <span style={{ fontSize: '10px', color: '#a1a1aa' }} dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && '-'}{edu.endDate}</span>
+              </div>
+            )
+          })}</>
+        )}
+
+        {skills?.length > 0 && skills.some(s => s?.trim()) && (
+          <><h2 style={sectionStyle}>כישורים</h2>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+            {skills.filter(s => s?.trim()).map((skill, idx) => (
+              <span key={idx} style={{ padding: '5px 14px', background: `linear-gradient(135deg, ${rose}15, ${orange}15)`, color: '#be123c', borderRadius: '20px', fontSize: '11px', fontWeight: 600 }}>{skill}</span>
+            ))}
+          </div></>
+        )}
+
+        <div style={{ display: 'flex', gap: '32px', marginTop: '8px' }}>
+          {languages?.length > 0 && languages.some(l => l.language) && (
+            <div style={{ flex: 1 }}><h2 style={sectionStyle}>שפות</h2>
+            {languages.filter(l => l.language).map((lang, idx) => (
+              <p key={idx} style={{ ...textStyle, marginBottom: '2px' }}><strong>{lang.language}</strong>{lang.level && ` — ${lang.level}`}</p>
+            ))}</div>
+          )}
+          {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
+            <div style={{ flex: 1 }}><h2 style={sectionStyle}>הסמכות</h2>
+            {certifications.filter(c => c?.trim()).map((c, i) => (
+              <p key={i} style={{ ...textStyle, marginBottom: '2px' }}>• {c}</p>
+            ))}</div>
+          )}
+        </div>
+
+        {military && (<><h2 style={sectionStyle}>שירות צבאי</h2><p style={textStyle}>{military}</p></>)}
+        {volunteer && (<><h2 style={sectionStyle}>התנדבות</h2><p style={textStyle}>{volunteer}</p></>)}
+      </div>
+    </div>
+  )
+}
+
+export function CleanTemplate({ data }) {
+  if (!data) return null
+  const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
+
+  const teal = '#0d9488'
+  const tealDark = '#115e59'
+  const tealBg = '#f0fdfa'
+  const sideColor = '#134e4a'
+
+  const mainSection = { fontSize: '13px', fontWeight: 700, color: tealDark, borderBottom: `2px solid ${teal}`, paddingBottom: '5px', marginTop: '20px', marginBottom: '10px' }
+  const textStyle = { fontSize: '12px', color: '#475569', lineHeight: '1.65', margin: 0 }
+  const titleStyle = { fontSize: '13px', fontWeight: 700, color: '#1e293b', margin: 0 }
+  const sideSection = { fontSize: '10px', fontWeight: 700, color: '#5eead4', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '20px', marginBottom: '8px' }
+  const sideText = { fontSize: '11px', color: '#94a3b8', lineHeight: 1.5, margin: '0 0 3px' }
+
+  return (
+    <div style={{ fontFamily: 'Heebo, Arial, sans-serif', direction: 'rtl', display: 'flex', minHeight: '100%', backgroundColor: '#ffffff' }}>
+      {/* Right side panel */}
+      <div style={{ width: '32%', backgroundColor: sideColor, padding: '32px 18px', flexShrink: 0 }}>
+        {personalInfo.fullName && <h1 style={{ fontSize: '20px', fontWeight: 800, color: '#ffffff', margin: '0 0 4px', lineHeight: 1.3 }}>{personalInfo.fullName}</h1>}
+        {personalInfo.title && <p style={{ fontSize: '11px', color: '#5eead4', fontWeight: 500, margin: '0 0 20px' }}>{personalInfo.title}</p>}
+
+        <h2 style={{ ...sideSection, marginTop: 0 }}>קשר</h2>
+        {personalInfo.email && <p style={sideText} dir="ltr">{personalInfo.email}</p>}
+        {personalInfo.phone && <p style={sideText} dir="ltr">{personalInfo.phone}</p>}
+        {personalInfo.address && <p style={sideText}>{personalInfo.address}</p>}
+        {personalInfo.linkedin && <p style={sideText} dir="ltr">{personalInfo.linkedin}</p>}
+
+        {education?.length > 0 && education.some(e => e.degree || e.institution) && (
+          <><h2 style={sideSection}>השכלה</h2>
+          {education.map((edu, idx) => {
+            if (!edu.degree && !edu.institution) return null
+            return (
+              <div key={idx} style={{ marginBottom: '10px' }}>
+                <p style={{ fontSize: '11px', fontWeight: 700, color: '#ffffff', margin: 0 }}>{edu.degree}</p>
+                {edu.field && <p style={{ fontSize: '10px', color: '#5eead4', margin: 0 }}>{edu.field}</p>}
+                {edu.institution && <p style={sideText}>{edu.institution}</p>}
+                <p style={{ fontSize: '10px', color: '#64748b', margin: 0 }} dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && '-'}{edu.endDate}</p>
+              </div>
+            )
+          })}</>
+        )}
+
+        {skills?.length > 0 && skills.some(s => s?.trim()) && (
+          <><h2 style={sideSection}>כישורים</h2>
+          {skills.filter(s => s?.trim()).map((skill, idx) => (
+            <div key={idx} style={{ marginBottom: '6px' }}>
+              <span style={{ fontSize: '11px', color: '#cbd5e1' }}>{skill}</span>
+              <div style={{ width: '100%', height: '3px', backgroundColor: '#1e3a3a', borderRadius: '2px', marginTop: '3px' }}>
+                <div style={{ width: `${70 + Math.random() * 30}%`, height: '100%', backgroundColor: '#5eead4', borderRadius: '2px' }}></div>
+              </div>
+            </div>
+          ))}</>
+        )}
+
+        {languages?.length > 0 && languages.some(l => l.language) && (
+          <><h2 style={sideSection}>שפות</h2>
+          {languages.filter(l => l.language).map((lang, idx) => (
+            <p key={idx} style={sideText}><strong style={{ color: '#ffffff' }}>{lang.language}</strong>{lang.level && ` — ${lang.level}`}</p>
+          ))}</>
+        )}
+
+        {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
+          <><h2 style={sideSection}>הסמכות</h2>
+          {certifications.filter(c => c?.trim()).map((c, i) => (
+            <p key={i} style={sideText}>› {c}</p>
+          ))}</>
+        )}
+      </div>
+
+      {/* Main content */}
+      <div style={{ flex: 1, padding: '32px 28px' }}>
+        {personalInfo.summary && (<><h2 style={mainSection}>אודות</h2><p style={textStyle}>{personalInfo.summary}</p></>)}
+
+        {experience?.length > 0 && experience.some(e => e.position || e.company) && (
+          <><h2 style={mainSection}>ניסיון תעסוקתי</h2>
+          {experience.map((exp, idx) => {
+            if (!exp.position && !exp.company) return null
+            return (
+              <div key={idx} style={{ marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <p style={titleStyle}>{exp.position}</p>
+                    {exp.company && <p style={{ fontSize: '11px', color: teal, fontWeight: 600, margin: 0 }}>{exp.company}</p>}
+                  </div>
+                  <span style={{ fontSize: '11px', color: '#94a3b8', backgroundColor: tealBg, padding: '2px 10px', borderRadius: '4px' }} dir="ltr">
+                    {exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}
+                  </span>
+                </div>
+                {exp.description && <p style={{ ...textStyle, marginTop: '4px' }}>{exp.description}</p>}
+              </div>
+            )
+          })}</>
+        )}
+
+        {military && (<><h2 style={mainSection}>שירות צבאי</h2><p style={textStyle}>{military}</p></>)}
+        {volunteer && (<><h2 style={mainSection}>התנדבות</h2><p style={textStyle}>{volunteer}</p></>)}
+      </div>
+    </div>
+  )
+}
+
 export const templates = {
   modern: { name: 'מודרני', component: ModernTemplate, color: 'blue' },
   classic: { name: 'קלאסי', component: ClassicTemplate, color: 'slate' },
@@ -736,4 +1044,7 @@ export const templates = {
   executive: { name: 'מנהלים', component: ExecutiveTemplate, color: 'amber' },
   minimal: { name: 'מינימלי', component: MinimalTemplate, color: 'indigo' },
   bold: { name: 'נועז', component: BoldTemplate, color: 'red' },
+  tech: { name: 'טכנולוגי', component: TechTemplate, color: 'cyan' },
+  gradient: { name: 'גרדיאנט', component: GradientTemplate, color: 'rose' },
+  clean: { name: 'קלין', component: CleanTemplate, color: 'teal' },
 }
