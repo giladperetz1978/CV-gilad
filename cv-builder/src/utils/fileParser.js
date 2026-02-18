@@ -159,14 +159,14 @@ function extractDates(str) {
 }
 
 const SECTION_PATTERNS = {
-  summary: /^(תקציר מקצועי|תקציר|אודות|על עצמי|פרופיל|summary|about me|profile|objective)$/i,
-  experience: /^(תעסוקה|ניסיון|ניסיון תעסוקתי|ניסיון מקצועי|ניסיון עבודה|experience|work|employment|work history)$/i,
-  education: /^(השכלה|לימודים|education|academic|הכשרה אקדמית)$/i,
-  skills: /^(כישורים|מיומנויות|יכולות|skills|technologies|טכנולוגיות|כלים|תוכנות|מיומנויות טכניות)$/i,
+  summary: /^(תקציר מקצועי|תקציר|אודות|על עצמי|פרופיל|summary|about me|profile|objective|professional summary)$/i,
+  experience: /^(תעסוקה|ניסיון|ניסיון תעסוקתי|ניסיון מקצועי|ניסיון עבודה|experience|work|employment|work history|work experience|professional experience)$/i,
+  education: /^(השכלה|לימודים|education|academic|הכשרה אקדמית|academic background)$/i,
+  skills: /^(כישורים|מיומנויות|יכולות|skills|technologies|טכנולוגיות|כלים|תוכנות|מיומנויות טכניות|technical skills|core competencies)$/i,
   languages: /^(שפות|languages)$/i,
-  certifications: /^(הסמכות|תעודות|certifications|certificates|קורסים|הכשרות|courses)$/i,
-  military: /^(שירות צבאי|צבא|military|שירות לאומי|שירות סדיר)$/i,
-  volunteer: /^(התנדבות|volunteer|פעילות חברתית)$/i,
+  certifications: /^(הסמכות|תעודות|certifications|certificates|קורסים|הכשרות|courses|training|licenses)$/i,
+  military: /^(שירות צבאי|צבא|military|שירות לאומי|שירות סדיר|military service)$/i,
+  volunteer: /^(התנדבות|volunteer|volunteering|פעילות חברתית|community)$/i,
 }
 
 function detectSection(line) {
@@ -213,55 +213,81 @@ const KNOWN_LANGUAGES = {
   'french': '',
 }
 
-const STRONG_MILITARY = ['צה"ל', 'צבא הגנה', 'חיל האוויר', 'חיל הים', 'חיל היבשה', 'מנוען מסוקים', 'שירות סדיר', 'שירות מלא', 'סדיר מלא']
-const MILITARY_KEYWORDS = ['חיל', 'צבא', 'צה"ל', 'סדיר', 'מילואים', 'קצין', 'מפקד', 'לוחם', 'מנוען', 'מסוקים', 'טייס', 'גדוד', 'חטיבה']
+const STRONG_MILITARY = ['צה"ל', 'צבא הגנה', 'חיל האוויר', 'חיל הים', 'חיל היבשה', 'מנוען מסוקים', 'שירות סדיר', 'שירות מלא', 'סדיר מלא', 'idf', 'israel defense forces', 'technology and maintenance corps']
+const MILITARY_KEYWORDS = ['חיל', 'צבא', 'צה"ל', 'סדיר', 'מילואים', 'קצין', 'מפקד', 'לוחם', 'מנוען', 'מסוקים', 'טייס', 'גדוד', 'חטיבה', 'idf', 'military', 'defense forces', 'corps']
 
-function isKnownSkillWord(word) {
+function isKnownSkillWord(word, isHebrewCV) {
   const lower = word.trim().toLowerCase()
   if (KNOWN_SKILL_WORDS.has(lower)) return true
-  if (lower.length < 20 && /^[a-zA-Z\s.+#]+$/.test(lower) && lower.length > 1) return true
+  if (isHebrewCV && lower.length < 20 && /^[a-zA-Z][a-zA-Z.+#]*$/.test(lower) && lower.length > 2) {
+    const commonEnglish = new Set(['the','and','with','for','from','that','this','was','are','but','not','you','all','can','had','her','one','our','out','has','his','how','its','may','new','now','old','see','way','who','did','get','let','say','she','too','use','man','day','any','few','big','own','job','put','run','set','try','two','got','end','per','via','yet','due','ago','etc','nor','top','non','sub','pre','mid'])
+    if (commonEnglish.has(lower)) return false
+    return true
+  }
   return false
+}
+
+function detectCVLanguage(text) {
+  const hebrewChars = (text.match(/[\u0590-\u05FF]/g) || []).length
+  const englishChars = (text.match(/[a-zA-Z]/g) || []).length
+  return hebrewChars > englishChars * 0.3 ? 'he' : 'en'
 }
 
 function isLanguageWord(word) {
   return word.trim() in KNOWN_LANGUAGES
 }
 
-function fixReversedPhone(phone) {
+function fixReversedPhone(phone, isHebrewCV) {
   if (!phone) return phone
+
+  if (!isHebrewCV) {
+    const clean = phone.replace(/[-.\s]/g, '')
+    if (/^0\d{9}$/.test(clean)) {
+      return clean.substring(0, 3) + '-' + clean.substring(3)
+    }
+    return phone
+  }
+
   const match = phone.match(/^(\d{7})-(\d{2,3})$/)
-  if (match) {
-    return match[2] + '-' + match[1]
-  }
+  if (match) return match[2] + '-' + match[1]
+
   const match2 = phone.match(/^(\d{7})(\d{3})$/)
-  if (match2) {
-    return match2[2] + '-' + match2[1]
-  }
+  if (match2) return match2[2] + '-' + match2[1]
+
   return phone
 }
 
 export function textToCvData(text) {
   const cleaned = cleanText(text)
+  const cvLang = detectCVLanguage(cleaned)
+  const isHeb = cvLang === 'he'
   let rawLines = cleaned.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+
+  rawLines = rawLines.filter(l => l !== '●' && l !== '•' && l !== '-')
 
   const extractedSkills = []
   const extractedLanguages = []
   const filteredLines = []
 
   for (const line of rawLines) {
-    const words = line.split(/\s+/)
-    const cleanWords = []
-    for (const word of words) {
-      if (isLanguageWord(word)) {
-        extractedLanguages.push(word.trim())
-      } else if (isKnownSkillWord(word)) {
-        extractedSkills.push(word)
-      } else {
-        cleanWords.push(word)
+    if (isHeb) {
+      const words = line.split(/\s+/)
+      const cleanWords = []
+      for (const word of words) {
+        if (isLanguageWord(word)) {
+          extractedLanguages.push(word.trim())
+        } else if (isKnownSkillWord(word, isHeb)) {
+          extractedSkills.push(word)
+        } else {
+          cleanWords.push(word)
+        }
       }
+      const newLine = cleanWords.join(' ').trim()
+      if (newLine.length > 0 && newLine !== '.' && newLine !== ',') filteredLines.push(newLine)
+    } else {
+      let processedLine = line.replace(/^●\s*/, '').replace(/\s*●\s*/g, '. ').trim()
+      if (processedLine.length > 0) filteredLines.push(processedLine)
     }
-    const newLine = cleanWords.join(' ').trim()
-    if (newLine.length > 0 && newLine !== '.' && newLine !== ',') filteredLines.push(newLine)
   }
 
   const lines = filteredLines
@@ -280,28 +306,37 @@ export function textToCvData(text) {
   const emailMatch = cleaned.match(/[\w.-]+@[\w.-]+\.\w+/)
   if (emailMatch) cvData.personalInfo.email = emailMatch[0]
 
-  const phoneMatch = cleaned.match(/(?:0\d{1,2}[-.]?\d{7,8}|\+972[-.]?\d{1,2}[-.]?\d{7}|\d{7,10}[-.]?\d{2,3})/)
-  if (phoneMatch) cvData.personalInfo.phone = fixReversedPhone(phoneMatch[0])
+  const phoneMatch = cleaned.match(/(?:0\d{2}[-.]?\d{7}|0\d{1,2}[-.]?\d{7,8}|\+972[-.]?\d{1,2}[-.]?\d{7}|\d{7,10}[-.]?\d{2,3})/)
+  if (phoneMatch) cvData.personalInfo.phone = fixReversedPhone(phoneMatch[0], isHeb)
 
   const linkedinMatch = cleaned.match(/linkedin\.com\/in\/[\w-]+/)
   if (linkedinMatch) cvData.personalInfo.linkedin = linkedinMatch[0]
 
-  const allTokens = cleaned.split(/[\s,]+/)
   const allText = lines.join(' ')
 
-  if (lines.length > 0) {
-    let nameLine = lines[0]
-    nameLine = nameLine.replace(/[\w.-]+@[\w.-]+\.\w+/g, '')
+  for (let i = 0; i < Math.min(lines.length, 5); i++) {
+    let candidate = lines[i]
+      .replace(/[\w.-]+@[\w.-]+\.\w+/g, '')
       .replace(/\d{2,3}[-.]?\d{7,8}/g, '')
       .replace(/\+972[-.]?\d+/g, '')
       .trim()
-    const nameParts = nameLine.split(/\s+/).filter(p => /[\u0590-\u05FF]/.test(p) && p.length > 1)
-    if (nameParts.length >= 2 && nameParts.length <= 4) {
-      cvData.personalInfo.fullName = nameParts.join(' ')
-    } else if (nameParts.length === 1 && lines.length > 1) {
-      const secondParts = lines[1].split(/\s+/).filter(p => /[\u0590-\u05FF]/.test(p) && p.length > 1)
-      if (secondParts.length >= 1 && secondParts.length <= 3) {
-        cvData.personalInfo.fullName = nameParts[0] + ' ' + secondParts[0]
+
+    if (detectSection(candidate)) continue
+
+    const isInitials = /^[A-Z]{1,3}$/.test(candidate.trim())
+    if (isInitials) continue
+
+    if (isHeb) {
+      const parts = candidate.split(/\s+/).filter(p => /[\u0590-\u05FF]/.test(p) && p.length > 1)
+      if (parts.length >= 2 && parts.length <= 4) {
+        cvData.personalInfo.fullName = parts.join(' ')
+        break
+      }
+    } else {
+      const parts = candidate.split(/\s+/).filter(p => /^[A-Z][a-zA-Z'-]+$/.test(p))
+      if (parts.length >= 2 && parts.length <= 4 && candidate.length < 40) {
+        cvData.personalInfo.fullName = parts.join(' ')
+        break
       }
     }
   }
