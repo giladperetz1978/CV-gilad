@@ -159,9 +159,9 @@ function extractDates(str) {
 }
 
 const SECTION_PATTERNS = {
-  summary: /^(תקציר|אודות|על עצמי|פרופיל|סיכום|summary|about|profile|objective)$/i,
+  summary: /^(תקציר מקצועי|תקציר|אודות|על עצמי|פרופיל|summary|about me|profile|objective)$/i,
   experience: /^(תעסוקה|ניסיון|ניסיון תעסוקתי|ניסיון מקצועי|ניסיון עבודה|experience|work|employment|work history)$/i,
-  education: /^(השכלה|לימודים|education|academic|הכשרה)$/i,
+  education: /^(השכלה|לימודים|education|academic|הכשרה אקדמית)$/i,
   skills: /^(כישורים|מיומנויות|יכולות|skills|technologies|טכנולוגיות|כלים|תוכנות|מיומנויות טכניות)$/i,
   languages: /^(שפות|languages)$/i,
   certifications: /^(הסמכות|תעודות|certifications|certificates|קורסים|הכשרות|courses)$/i,
@@ -171,10 +171,16 @@ const SECTION_PATTERNS = {
 
 function detectSection(line) {
   const trimmed = line.trim()
+
   for (const [section, pattern] of Object.entries(SECTION_PATTERNS)) {
     if (pattern.test(trimmed)) return section
   }
+
+  if (trimmed.length > 40) return null
+
   const words = trimmed.split(/\s+/)
+  if (words.length > 5) return null
+
   for (const word of words) {
     for (const [section, pattern] of Object.entries(SECTION_PATTERNS)) {
       if (pattern.test(word)) return section
@@ -334,6 +340,17 @@ export function textToCvData(text) {
 
     const section = detectSection(line)
     if (section) {
+      const isSidebarSection = (section === 'languages' || section === 'skills')
+      const isMainSection = (currentSection === 'experience' || currentSection === 'education')
+
+      if (isSidebarSection && isMainSection) {
+        const nextLines = lines.slice(i + 1, i + 4)
+        const nextLooksLikeContent = nextLines.some(l => l.length > 50 || isDateLike(l))
+        if (nextLooksLikeContent) {
+          continue
+        }
+      }
+
       if (currentSection === 'experience') flushExpBlock()
       if (currentSection === 'education') flushEduBlock()
       currentSection = section
