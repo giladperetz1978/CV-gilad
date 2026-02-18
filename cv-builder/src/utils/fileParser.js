@@ -213,7 +213,8 @@ const KNOWN_LANGUAGES = {
   'french': '',
 }
 
-const MILITARY_KEYWORDS = ['חיל', 'האוויר', 'צבא', 'צה"ל', 'סדיר', 'מילואים', 'קצין', 'מפקד', 'לוחם', 'מנוען', 'מסוקים', 'טייס', 'חיל הים', 'יחידה', 'גדוד', 'חטיבה']
+const STRONG_MILITARY = ['צה"ל', 'צבא הגנה', 'חיל האוויר', 'חיל הים', 'חיל היבשה', 'מנוען מסוקים', 'שירות סדיר', 'שירות מלא', 'סדיר מלא']
+const MILITARY_KEYWORDS = ['חיל', 'צבא', 'צה"ל', 'סדיר', 'מילואים', 'קצין', 'מפקד', 'לוחם', 'מנוען', 'מסוקים', 'טייס', 'גדוד', 'חטיבה']
 
 function isKnownSkillWord(word) {
   const lower = word.trim().toLowerCase()
@@ -498,8 +499,20 @@ export function textToCvData(text) {
   const militaryExp = []
   const civilExp = []
   for (const exp of cvData.experience) {
-    const allText = `${exp.position} ${exp.company} ${exp.description}`.toLowerCase()
-    const isMilitary = MILITARY_KEYWORDS.some(kw => allText.includes(kw))
+    const allText = `${exp.position} ${exp.company} ${exp.description}`
+    const allLower = allText.toLowerCase()
+
+    const hasStrongMatch = STRONG_MILITARY.some(kw => allLower.includes(kw))
+
+    const matchCount = MILITARY_KEYWORDS.filter(kw => allLower.includes(kw)).length
+
+    const startYear = parseInt(exp.startDate) || 0
+    const endYear = parseInt(exp.endDate) || 0
+    const duration = endYear - startYear
+    const typicalServiceAge = (startYear >= 1990 && startYear <= 2025 && duration >= 1 && duration <= 4)
+
+    const isMilitary = hasStrongMatch || (matchCount >= 2 && typicalServiceAge)
+
     if (isMilitary) {
       militaryExp.push(exp)
     } else {
@@ -509,9 +522,9 @@ export function textToCvData(text) {
 
   if (militaryExp.length > 0) {
     const milParts = militaryExp.map(m => {
-      const parts = [m.position, m.company, m.description].filter(Boolean)
+      const parts = [m.position, m.company].filter(Boolean)
       const dates = [m.startDate, m.endDate].filter(Boolean).join('-')
-      return parts.join(' ') + (dates ? ` (${dates})` : '')
+      return parts.join(', ') + (dates ? ` (${dates})` : '')
     })
     cvData.military = (cvData.military ? cvData.military + '. ' : '') + milParts.join('. ')
     cvData.experience = civilExp

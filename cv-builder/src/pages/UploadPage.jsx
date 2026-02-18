@@ -1,17 +1,22 @@
 import React, { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDropzone } from 'react-dropzone'
-import { Upload, FileText, FileCheck, AlertCircle, Loader2, Sparkles, ArrowLeft } from 'lucide-react'
+import { Upload, FileText, FileCheck, AlertCircle, Loader2, Sparkles, ArrowLeft, Brain, Key, Eye, EyeOff } from 'lucide-react'
 import { parsePDF, parseWord, textToCvData } from '../utils/fileParser'
+import { parseWithAI } from '../utils/aiParser'
 import { professionalRewriteCV } from '../utils/professionalRewrite'
 
 export default function UploadPage({ setCvData, setSelectedTemplate }) {
   const navigate = useNavigate()
   const [loading, setLoading] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [error, setError] = useState(null)
   const [fileName, setFileName] = useState(null)
   const [rawText, setRawText] = useState(null)
   const [parsed, setParsed] = useState(false)
+  const [apiKey, setApiKey] = useState(() => localStorage.getItem('openai_key') || '')
+  const [showKey, setShowKey] = useState(false)
+  const [showAiPanel, setShowAiPanel] = useState(false)
 
   const onDrop = useCallback(async (acceptedFiles) => {
     if (acceptedFiles.length === 0) return
@@ -65,6 +70,24 @@ export default function UploadPage({ setCvData, setSelectedTemplate }) {
     maxFiles: 1,
     maxSize: 10 * 1024 * 1024,
   })
+
+  const handleAIParse = async () => {
+    if (!rawText || !apiKey.trim()) return
+
+    setAiLoading(true)
+    setError(null)
+
+    try {
+      localStorage.setItem('openai_key', apiKey.trim())
+      const cvData = await parseWithAI(rawText, apiKey.trim())
+      setCvData(cvData)
+    } catch (err) {
+      console.error('AI parse error:', err)
+      setError(err.message || 'שגיאה בניתוח AI. נסה שנית.')
+    } finally {
+      setAiLoading(false)
+    }
+  }
 
   const handleRewriteAndEdit = () => {
     setCvData(prev => professionalRewriteCV(prev))
@@ -158,6 +181,66 @@ export default function UploadPage({ setCvData, setSelectedTemplate }) {
                 <span className="font-medium">{fileName}</span> - המסמך נותח ומוכן לעיצוב מחדש
               </p>
             </div>
+          </div>
+
+          {/* AI Enhancement Panel */}
+          <div className="bg-gradient-to-l from-violet-50 to-purple-50 border border-violet-200 rounded-xl p-4">
+            <button
+              onClick={() => setShowAiPanel(!showAiPanel)}
+              className="w-full flex items-center justify-between"
+            >
+              <div className="flex items-center gap-2">
+                <Brain className="w-5 h-5 text-violet-600" />
+                <span className="font-semibold text-violet-800">ניתוח חכם עם AI</span>
+                <span className="text-xs bg-violet-200 text-violet-700 px-2 py-0.5 rounded-full">מומלץ</span>
+              </div>
+              <span className="text-violet-400 text-sm">{showAiPanel ? '▲' : '▼'}</span>
+            </button>
+
+            {showAiPanel && (
+              <div className="mt-4 space-y-3">
+                <p className="text-sm text-violet-600">
+                  ניתוח AI מבוסס GPT יזהה בצורה מדויקת הרבה יותר את כל הסקשנים, ישפר את הניסוח, ויפריד נכון בין ניסיון לשירות צבאי.
+                </p>
+                <div>
+                  <label className="block text-sm font-medium text-violet-700 mb-1">
+                    <Key className="w-3.5 h-3.5 inline ml-1" />
+                    מפתח OpenAI API
+                  </label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <input
+                        type={showKey ? 'text' : 'password'}
+                        value={apiKey}
+                        onChange={e => setApiKey(e.target.value)}
+                        placeholder="sk-..."
+                        dir="ltr"
+                        className="w-full px-3 py-2 rounded-lg border border-violet-200 bg-white text-sm outline-none focus:border-violet-400 focus:ring-2 focus:ring-violet-100 pl-9"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowKey(!showKey)}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 text-violet-400 hover:text-violet-600"
+                      >
+                        {showKey ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                    <button
+                      onClick={handleAIParse}
+                      disabled={aiLoading || !apiKey.trim()}
+                      className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold bg-violet-600 text-white hover:bg-violet-700 shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                    >
+                      {aiLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Brain className="w-4 h-4" />}
+                      {aiLoading ? 'מנתח...' : 'נתח עם AI'}
+                    </button>
+                  </div>
+                  <p className="text-xs text-violet-400 mt-1.5">
+                    המפתח נשמר בדפדפן שלך בלבד ולא נשלח לשום מקום מלבד OpenAI.
+                    <a href="https://platform.openai.com/api-keys" target="_blank" rel="noopener noreferrer" className="underline mr-1 text-violet-500">קבל מפתח כאן</a>
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {rawText && (
