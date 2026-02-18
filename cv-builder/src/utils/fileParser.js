@@ -198,11 +198,45 @@ const KNOWN_SKILL_WORDS = new Set([
   'ai', 'thermal', 'breakage',
 ])
 
-function isKnownSkillLine(line) {
-  const lower = line.trim().toLowerCase()
+const KNOWN_LANGUAGES = {
+  'עברית': 'שפת אם',
+  'אנגלית': '',
+  'ערבית': '',
+  'רוסית': '',
+  'צרפתית': '',
+  'ספרדית': '',
+  'אמהרית': '',
+  'english': '',
+  'hebrew': 'שפת אם',
+  'arabic': '',
+  'russian': '',
+  'french': '',
+}
+
+const MILITARY_KEYWORDS = ['חיל', 'האוויר', 'צבא', 'צה"ל', 'סדיר', 'מילואים', 'קצין', 'מפקד', 'לוחם', 'מנוען', 'מסוקים', 'טייס', 'חיל הים', 'יחידה', 'גדוד', 'חטיבה']
+
+function isKnownSkillWord(word) {
+  const lower = word.trim().toLowerCase()
   if (KNOWN_SKILL_WORDS.has(lower)) return true
   if (lower.length < 20 && /^[a-zA-Z\s.+#]+$/.test(lower) && lower.length > 1) return true
   return false
+}
+
+function isLanguageWord(word) {
+  return word.trim() in KNOWN_LANGUAGES
+}
+
+function fixReversedPhone(phone) {
+  if (!phone) return phone
+  const match = phone.match(/^(\d{7})-(\d{2,3})$/)
+  if (match) {
+    return match[2] + '-' + match[1]
+  }
+  const match2 = phone.match(/^(\d{7})(\d{3})$/)
+  if (match2) {
+    return match2[2] + '-' + match2[1]
+  }
+  return phone
 }
 
 export function textToCvData(text) {
@@ -210,20 +244,23 @@ export function textToCvData(text) {
   let rawLines = cleaned.split('\n').map(l => l.trim()).filter(l => l.length > 0)
 
   const extractedSkills = []
+  const extractedLanguages = []
   const filteredLines = []
 
   for (const line of rawLines) {
     const words = line.split(/\s+/)
     const cleanWords = []
     for (const word of words) {
-      if (isKnownSkillLine(word)) {
+      if (isLanguageWord(word)) {
+        extractedLanguages.push(word.trim())
+      } else if (isKnownSkillWord(word)) {
         extractedSkills.push(word)
       } else {
         cleanWords.push(word)
       }
     }
     const newLine = cleanWords.join(' ').trim()
-    if (newLine.length > 0) filteredLines.push(newLine)
+    if (newLine.length > 0 && newLine !== '.' && newLine !== ',') filteredLines.push(newLine)
   }
 
   const lines = filteredLines
@@ -242,8 +279,8 @@ export function textToCvData(text) {
   const emailMatch = cleaned.match(/[\w.-]+@[\w.-]+\.\w+/)
   if (emailMatch) cvData.personalInfo.email = emailMatch[0]
 
-  const phoneMatch = cleaned.match(/(?:0\d{1,2}[-.]?\d{7,8}|\+972[-.]?\d{1,2}[-.]?\d{7}|\d{3}[-.]?\d{3,4}[-.]?\d{3,4})/)
-  if (phoneMatch) cvData.personalInfo.phone = phoneMatch[0]
+  const phoneMatch = cleaned.match(/(?:0\d{1,2}[-.]?\d{7,8}|\+972[-.]?\d{1,2}[-.]?\d{7}|\d{7,10}[-.]?\d{2,3})/)
+  if (phoneMatch) cvData.personalInfo.phone = fixReversedPhone(phoneMatch[0])
 
   const linkedinMatch = cleaned.match(/linkedin\.com\/in\/[\w-]+/)
   if (linkedinMatch) cvData.personalInfo.linkedin = linkedinMatch[0]
@@ -458,6 +495,28 @@ export function textToCvData(text) {
   if (currentSection === 'experience') flushExpBlock()
   if (currentSection === 'education') flushEduBlock()
 
+  const militaryExp = []
+  const civilExp = []
+  for (const exp of cvData.experience) {
+    const allText = `${exp.position} ${exp.company} ${exp.description}`.toLowerCase()
+    const isMilitary = MILITARY_KEYWORDS.some(kw => allText.includes(kw))
+    if (isMilitary) {
+      militaryExp.push(exp)
+    } else {
+      civilExp.push(exp)
+    }
+  }
+
+  if (militaryExp.length > 0) {
+    const milParts = militaryExp.map(m => {
+      const parts = [m.position, m.company, m.description].filter(Boolean)
+      const dates = [m.startDate, m.endDate].filter(Boolean).join('-')
+      return parts.join(' ') + (dates ? ` (${dates})` : '')
+    })
+    cvData.military = (cvData.military ? cvData.military + '. ' : '') + milParts.join('. ')
+    cvData.experience = civilExp
+  }
+
   if (extractedSkills.length > 0) {
     const existingSkills = new Set(cvData.skills.map(s => s.toLowerCase()))
     for (const skill of extractedSkills) {
@@ -469,6 +528,20 @@ export function textToCvData(text) {
   }
 
   cvData.skills = cvData.skills.filter(s => s && s.trim().length > 0)
+
+  if (extractedLanguages.length > 0) {
+    const existingLangs = new Set(cvData.languages.map(l => l.language))
+    for (const lang of extractedLanguages) {
+      if (!existingLangs.has(lang)) {
+        cvData.languages.push({
+          id: crypto.randomUUID(),
+          language: lang,
+          level: KNOWN_LANGUAGES[lang] || '',
+        })
+        existingLangs.add(lang)
+      }
+    }
+  }
 
   if (cvData.experience.length === 0) {
     cvData.experience.push({ id: crypto.randomUUID(), company: '', position: '', startDate: '', endDate: '', current: false, description: '' })
