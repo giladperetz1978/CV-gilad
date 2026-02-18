@@ -1,29 +1,40 @@
 import React from 'react'
-import { Mail, Phone, MapPin, Globe, Linkedin, ExternalLink } from 'lucide-react'
 
-function ContactItem({ icon: Icon, text, isLink, href }) {
-  if (!text) return null
-  if (isLink) {
-    return (
-      <a href={href || text} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-blue-600 transition-colors" dir="ltr">
-        <Icon className="w-3.5 h-3.5 shrink-0" />
-        <span>{text}</span>
-      </a>
-    )
-  }
-  return (
-    <span className="flex items-center gap-1.5 text-xs text-slate-500" dir={text.match(/[a-zA-Z@]/) ? 'ltr' : 'rtl'}>
-      <Icon className="w-3.5 h-3.5 shrink-0" />
-      <span>{text}</span>
-    </span>
-  )
+const colors = {
+  blue600: '#2563eb',
+  blue700: '#1d4ed8',
+  blue100: '#dbeafe',
+  blue50: '#eff6ff',
+  violet600: '#7c3aed',
+  violet700: '#6d28d9',
+  violet100: '#ede9fe',
+  violet50: '#f5f3ff',
+  violet200: '#ddd6fe',
+  emerald500: '#10b981',
+  emerald600: '#059669',
+  emerald700: '#047857',
+  emerald50: '#ecfdf5',
+  emerald100: '#d1fae5',
+  slate900: '#0f172a',
+  slate800: '#1e293b',
+  slate700: '#334155',
+  slate600: '#475569',
+  slate500: '#64748b',
+  slate400: '#94a3b8',
+  slate300: '#cbd5e1',
+  slate200: '#e2e8f0',
+  slate100: '#f1f5f9',
+  slate50: '#f8fafc',
+  white: '#ffffff',
 }
 
-function SectionHeader({ title, color = '#2563eb' }) {
+function ContactItem({ icon, text, dir }) {
+  if (!text) return null
   return (
-    <h2 className="text-sm font-bold mt-5 mb-2 pb-1.5 border-b-2" style={{ color, borderColor: color }}>
-      {title}
-    </h2>
+    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: colors.slate500, direction: dir || 'inherit' }}>
+      {icon && <span style={{ fontSize: '10px' }}>{icon}</span>}
+      <span>{text}</span>
+    </span>
   )
 }
 
@@ -31,147 +42,97 @@ export function ModernTemplate({ data }) {
   if (!data) return null
   const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
 
+  const sectionStyle = { fontSize: '13px', fontWeight: 700, color: colors.blue600, borderBottom: `2px solid ${colors.blue600}`, paddingBottom: '5px', marginTop: '18px', marginBottom: '10px' }
+  const textStyle = { fontSize: '12px', color: colors.slate600, lineHeight: '1.6', margin: 0 }
+  const titleStyle = { fontSize: '13px', fontWeight: 700, color: colors.slate800, margin: 0 }
+  const subStyle = { fontSize: '11px', color: colors.slate500, margin: 0 }
+  const dateStyle = { fontSize: '11px', color: colors.slate400, whiteSpace: 'nowrap' }
+
   return (
-    <div className="p-8 font-[Heebo,sans-serif] text-slate-800 leading-relaxed" dir="rtl">
-      {/* Header */}
-      <div className="text-center mb-4 pb-4 border-b border-slate-200">
-        {personalInfo.fullName && (
-          <h1 className="text-2xl font-extrabold text-slate-900 mb-1">{personalInfo.fullName}</h1>
-        )}
-        {personalInfo.title && (
-          <p className="text-sm font-medium text-blue-600 mb-3">{personalInfo.title}</p>
-        )}
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-          <ContactItem icon={Mail} text={personalInfo.email} />
-          <ContactItem icon={Phone} text={personalInfo.phone} />
-          <ContactItem icon={MapPin} text={personalInfo.address} />
-          <ContactItem icon={Linkedin} text={personalInfo.linkedin} isLink href={`https://${personalInfo.linkedin}`} />
-          <ContactItem icon={Globe} text={personalInfo.website} isLink />
+    <div style={{ padding: '32px', fontFamily: 'Heebo, Arial, sans-serif', color: colors.slate800, lineHeight: 1.6, direction: 'rtl', backgroundColor: colors.white }}>
+      <div style={{ textAlign: 'center', marginBottom: '16px', paddingBottom: '16px', borderBottom: `1px solid ${colors.slate200}` }}>
+        {personalInfo.fullName && <h1 style={{ fontSize: '24px', fontWeight: 800, color: colors.slate900, marginBottom: '4px', margin: 0 }}>{personalInfo.fullName}</h1>}
+        {personalInfo.title && <p style={{ fontSize: '14px', fontWeight: 500, color: colors.blue600, marginBottom: '10px', margin: '4px 0 10px' }}>{personalInfo.title}</p>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px' }}>
+          <ContactItem icon="✉" text={personalInfo.email} dir="ltr" />
+          <ContactItem icon="📞" text={personalInfo.phone} dir="ltr" />
+          <ContactItem icon="📍" text={personalInfo.address} />
+          <ContactItem icon="🔗" text={personalInfo.linkedin} dir="ltr" />
+          {personalInfo.website && <ContactItem icon="🌐" text={personalInfo.website} dir="ltr" />}
         </div>
       </div>
 
-      {/* Summary */}
-      {personalInfo.summary && (
-        <>
-          <SectionHeader title="תקציר מקצועי" />
-          <p className="text-xs text-slate-600 leading-relaxed">{personalInfo.summary}</p>
-        </>
-      )}
+      {personalInfo.summary && (<><h2 style={sectionStyle}>תקציר מקצועי</h2><p style={textStyle}>{personalInfo.summary}</p></>)}
 
-      {/* Experience */}
       {experience?.length > 0 && experience.some(e => e.position || e.company) && (
-        <>
-          <SectionHeader title="ניסיון תעסוקתי" />
-          {experience.map((exp, idx) => {
-            if (!exp.position && !exp.company) return null
-            return (
-              <div key={idx} className="mb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-800">{exp.position}</h3>
-                    {exp.company && <p className="text-xs font-medium text-slate-500">{exp.company}</p>}
-                  </div>
-                  <span className="text-xs text-slate-400 whitespace-nowrap" dir="ltr">
-                    {exp.startDate && exp.startDate}
-                    {(exp.startDate && (exp.endDate || exp.current)) && ' - '}
-                    {exp.current ? 'היום' : exp.endDate}
-                  </span>
+        <><h2 style={sectionStyle}>ניסיון תעסוקתי</h2>
+        {experience.map((exp, idx) => {
+          if (!exp.position && !exp.company) return null
+          return (
+            <div key={idx} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                <div>
+                  <p style={titleStyle}>{exp.position}</p>
+                  {exp.company && <p style={subStyle}>{exp.company}</p>}
                 </div>
-                {exp.description && (
-                  <p className="text-xs text-slate-600 mt-1 leading-relaxed">{exp.description}</p>
-                )}
+                <span style={dateStyle} dir="ltr">{exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}</span>
               </div>
-            )
-          })}
-        </>
+              {exp.description && <p style={{ ...textStyle, marginTop: '4px' }}>{exp.description}</p>}
+            </div>
+          )
+        })}</>
       )}
 
-      {/* Education */}
       {education?.length > 0 && education.some(e => e.degree || e.institution) && (
-        <>
-          <SectionHeader title="השכלה" />
-          {education.map((edu, idx) => {
-            if (!edu.degree && !edu.institution) return null
-            return (
-              <div key={idx} className="mb-3">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-800">
-                      {edu.degree}{edu.field ? ` - ${edu.field}` : ''}
-                    </h3>
-                    {edu.institution && <p className="text-xs font-medium text-slate-500">{edu.institution}</p>}
-                  </div>
-                  <span className="text-xs text-slate-400 whitespace-nowrap" dir="ltr">
-                    {edu.startDate && edu.startDate}
-                    {(edu.startDate && edu.endDate) && ' - '}
-                    {edu.endDate}
-                  </span>
+        <><h2 style={sectionStyle}>השכלה</h2>
+        {education.map((edu, idx) => {
+          if (!edu.degree && !edu.institution) return null
+          return (
+            <div key={idx} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px' }}>
+                <div>
+                  <p style={titleStyle}>{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
+                  {edu.institution && <p style={subStyle}>{edu.institution}</p>}
                 </div>
-                {edu.description && (
-                  <p className="text-xs text-slate-600 mt-1">{edu.description}</p>
-                )}
+                <span style={dateStyle} dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && ' - '}{edu.endDate}</span>
               </div>
-            )
-          })}
-        </>
+              {edu.description && <p style={{ ...textStyle, marginTop: '4px' }}>{edu.description}</p>}
+            </div>
+          )
+        })}</>
       )}
 
-      {/* Skills */}
       {skills?.length > 0 && skills.some(s => s?.trim()) && (
-        <>
-          <SectionHeader title="כישורים וטכנולוגיות" />
-          <div className="flex flex-wrap gap-1.5">
-            {skills.filter(s => s?.trim()).map((skill, idx) => (
-              <span key={idx} className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-md text-xs font-medium">
-                {skill}
-              </span>
-            ))}
-          </div>
-        </>
+        <><h2 style={sectionStyle}>כישורים וטכנולוגיות</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+          {skills.filter(s => s?.trim()).map((skill, idx) => (
+            <span key={idx} style={{ padding: '3px 10px', backgroundColor: colors.blue50, color: colors.blue700, borderRadius: '6px', fontSize: '11px', fontWeight: 500 }}>{skill}</span>
+          ))}
+        </div></>
       )}
 
-      {/* Languages */}
       {languages?.length > 0 && languages.some(l => l.language) && (
-        <>
-          <SectionHeader title="שפות" />
-          <div className="flex flex-wrap gap-3">
-            {languages.filter(l => l.language).map((lang, idx) => (
-              <span key={idx} className="text-xs text-slate-600">
-                <span className="font-semibold">{lang.language}</span>
-                {lang.level && ` - ${lang.level}`}
-              </span>
-            ))}
-          </div>
-        </>
+        <><h2 style={sectionStyle}>שפות</h2>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px' }}>
+          {languages.filter(l => l.language).map((lang, idx) => (
+            <span key={idx} style={{ fontSize: '12px', color: colors.slate600 }}>
+              <strong>{lang.language}</strong>{lang.level && ` - ${lang.level}`}
+            </span>
+          ))}
+        </div></>
       )}
 
-      {/* Certifications */}
       {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
-        <>
-          <SectionHeader title="הסמכות" />
-          <ul className="space-y-0.5 pr-4">
-            {certifications.filter(c => c?.trim()).map((cert, idx) => (
-              <li key={idx} className="text-xs text-slate-600 list-disc">{cert}</li>
-            ))}
-          </ul>
-        </>
+        <><h2 style={sectionStyle}>הסמכות</h2>
+        <ul style={{ paddingRight: '16px', margin: 0 }}>
+          {certifications.filter(c => c?.trim()).map((cert, idx) => (
+            <li key={idx} style={{ fontSize: '12px', color: colors.slate600, marginBottom: '2px' }}>{cert}</li>
+          ))}
+        </ul></>
       )}
 
-      {/* Military */}
-      {military && (
-        <>
-          <SectionHeader title="שירות צבאי / לאומי" />
-          <p className="text-xs text-slate-600">{military}</p>
-        </>
-      )}
-
-      {/* Volunteer */}
-      {volunteer && (
-        <>
-          <SectionHeader title="התנדבות" />
-          <p className="text-xs text-slate-600">{volunteer}</p>
-        </>
-      )}
+      {military && (<><h2 style={sectionStyle}>שירות צבאי / לאומי</h2><p style={textStyle}>{military}</p></>)}
+      {volunteer && (<><h2 style={sectionStyle}>התנדבות</h2><p style={textStyle}>{volunteer}</p></>)}
     </div>
   )
 }
@@ -180,17 +141,16 @@ export function ClassicTemplate({ data }) {
   if (!data) return null
   const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
 
+  const sectionStyle = { fontSize: '11px', fontWeight: 700, color: colors.slate900, textTransform: 'uppercase', letterSpacing: '0.05em', borderBottom: `1px solid ${colors.slate300}`, paddingBottom: '4px', marginBottom: '8px', marginTop: '16px' }
+  const textStyle = { fontSize: '12px', color: colors.slate600, lineHeight: '1.6', margin: 0 }
+  const titleStyle = { fontSize: '13px', fontWeight: 700, color: colors.slate800, margin: 0 }
+
   return (
-    <div className="p-8 font-[Heebo,sans-serif] text-slate-800" dir="rtl">
-      {/* Header */}
-      <div className="mb-5 pb-4 border-b-2 border-slate-800">
-        {personalInfo.fullName && (
-          <h1 className="text-2xl font-extrabold text-slate-900 mb-0.5">{personalInfo.fullName}</h1>
-        )}
-        {personalInfo.title && (
-          <p className="text-sm font-semibold text-slate-600 mb-2">{personalInfo.title}</p>
-        )}
-        <div className="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-500">
+    <div style={{ padding: '32px', fontFamily: 'Heebo, Arial, sans-serif', color: colors.slate800, direction: 'rtl', backgroundColor: colors.white }}>
+      <div style={{ marginBottom: '20px', paddingBottom: '16px', borderBottom: `2px solid ${colors.slate800}` }}>
+        {personalInfo.fullName && <h1 style={{ fontSize: '24px', fontWeight: 800, color: colors.slate900, margin: '0 0 2px' }}>{personalInfo.fullName}</h1>}
+        {personalInfo.title && <p style={{ fontSize: '14px', fontWeight: 600, color: colors.slate600, margin: '0 0 8px' }}>{personalInfo.title}</p>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', fontSize: '11px', color: colors.slate500 }}>
           {personalInfo.email && <span>{personalInfo.email}</span>}
           {personalInfo.phone && <span>| {personalInfo.phone}</span>}
           {personalInfo.address && <span>| {personalInfo.address}</span>}
@@ -198,106 +158,47 @@ export function ClassicTemplate({ data }) {
         </div>
       </div>
 
-      {/* Summary */}
-      {personalInfo.summary && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">
-            תקציר מקצועי
-          </h2>
-          <p className="text-xs text-slate-600 leading-relaxed">{personalInfo.summary}</p>
-        </div>
-      )}
+      {personalInfo.summary && (<><h2 style={sectionStyle}>תקציר מקצועי</h2><p style={textStyle}>{personalInfo.summary}</p></>)}
 
-      {/* Experience */}
       {experience?.length > 0 && experience.some(e => e.position || e.company) && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">
-            ניסיון תעסוקתי
-          </h2>
-          {experience.map((exp, idx) => {
-            if (!exp.position && !exp.company) return null
-            return (
-              <div key={idx} className="mb-3">
-                <div className="flex justify-between">
-                  <h3 className="text-sm font-bold text-slate-800">{exp.position}</h3>
-                  <span className="text-xs text-slate-400" dir="ltr">
-                    {exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}
-                  </span>
-                </div>
-                {exp.company && <p className="text-xs text-slate-500 italic">{exp.company}</p>}
-                {exp.description && <p className="text-xs text-slate-600 mt-1">{exp.description}</p>}
+        <><h2 style={sectionStyle}>ניסיון תעסוקתי</h2>
+        {experience.map((exp, idx) => {
+          if (!exp.position && !exp.company) return null
+          return (
+            <div key={idx} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <p style={titleStyle}>{exp.position}</p>
+                <span style={{ fontSize: '11px', color: colors.slate400 }} dir="ltr">{exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}</span>
               </div>
-            )
-          })}
-        </div>
+              {exp.company && <p style={{ fontSize: '11px', color: colors.slate500, fontStyle: 'italic', margin: 0 }}>{exp.company}</p>}
+              {exp.description && <p style={{ ...textStyle, marginTop: '4px' }}>{exp.description}</p>}
+            </div>
+          )
+        })}</>
       )}
 
-      {/* Education */}
       {education?.length > 0 && education.some(e => e.degree || e.institution) && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">
-            השכלה
-          </h2>
-          {education.map((edu, idx) => {
-            if (!edu.degree && !edu.institution) return null
-            return (
-              <div key={idx} className="mb-2">
-                <div className="flex justify-between">
-                  <h3 className="text-sm font-bold text-slate-800">{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</h3>
-                  <span className="text-xs text-slate-400" dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && ' - '}{edu.endDate}</span>
-                </div>
-                {edu.institution && <p className="text-xs text-slate-500 italic">{edu.institution}</p>}
-                {edu.description && <p className="text-xs text-slate-600 mt-1">{edu.description}</p>}
+        <><h2 style={sectionStyle}>השכלה</h2>
+        {education.map((edu, idx) => {
+          if (!edu.degree && !edu.institution) return null
+          return (
+            <div key={idx} style={{ marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <p style={titleStyle}>{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
+                <span style={{ fontSize: '11px', color: colors.slate400 }} dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && ' - '}{edu.endDate}</span>
               </div>
-            )
-          })}
-        </div>
+              {edu.institution && <p style={{ fontSize: '11px', color: colors.slate500, fontStyle: 'italic', margin: 0 }}>{edu.institution}</p>}
+              {edu.description && <p style={{ ...textStyle, marginTop: '4px' }}>{edu.description}</p>}
+            </div>
+          )
+        })}</>
       )}
 
-      {/* Skills */}
-      {skills?.length > 0 && skills.some(s => s?.trim()) && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">
-            כישורים
-          </h2>
-          <p className="text-xs text-slate-600">{skills.filter(s => s?.trim()).join(' • ')}</p>
-        </div>
-      )}
-
-      {/* Languages */}
-      {languages?.length > 0 && languages.some(l => l.language) && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">
-            שפות
-          </h2>
-          <p className="text-xs text-slate-600">
-            {languages.filter(l => l.language).map(l => `${l.language}${l.level ? ` (${l.level})` : ''}`).join(' • ')}
-          </p>
-        </div>
-      )}
-
-      {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">
-            הסמכות
-          </h2>
-          <p className="text-xs text-slate-600">{certifications.filter(c => c?.trim()).join(' • ')}</p>
-        </div>
-      )}
-
-      {military && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">שירות צבאי</h2>
-          <p className="text-xs text-slate-600">{military}</p>
-        </div>
-      )}
-
-      {volunteer && (
-        <div className="mb-4">
-          <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider mb-1.5 border-b border-slate-300 pb-1">התנדבות</h2>
-          <p className="text-xs text-slate-600">{volunteer}</p>
-        </div>
-      )}
+      {skills?.length > 0 && skills.some(s => s?.trim()) && (<><h2 style={sectionStyle}>כישורים</h2><p style={textStyle}>{skills.filter(s => s?.trim()).join(' • ')}</p></>)}
+      {languages?.length > 0 && languages.some(l => l.language) && (<><h2 style={sectionStyle}>שפות</h2><p style={textStyle}>{languages.filter(l => l.language).map(l => `${l.language}${l.level ? ` (${l.level})` : ''}`).join(' • ')}</p></>)}
+      {certifications?.length > 0 && certifications.some(c => c?.trim()) && (<><h2 style={sectionStyle}>הסמכות</h2><p style={textStyle}>{certifications.filter(c => c?.trim()).join(' • ')}</p></>)}
+      {military && (<><h2 style={sectionStyle}>שירות צבאי</h2><p style={textStyle}>{military}</p></>)}
+      {volunteer && (<><h2 style={sectionStyle}>התנדבות</h2><p style={textStyle}>{volunteer}</p></>)}
     </div>
   )
 }
@@ -306,53 +207,45 @@ export function CreativeTemplate({ data }) {
   if (!data) return null
   const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
 
+  const sectionStyle = { fontSize: '13px', fontWeight: 700, color: colors.violet700, marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }
+  const textStyle = { fontSize: '12px', color: colors.slate600, lineHeight: '1.6', margin: 0 }
+  const titleStyle = { fontSize: '13px', fontWeight: 700, color: colors.slate800, margin: 0 }
+  const dot = <span style={{ width: '8px', height: '8px', borderRadius: '4px', backgroundColor: colors.violet600, display: 'inline-block', flexShrink: 0 }}></span>
+
   return (
-    <div className="font-[Heebo,sans-serif] text-slate-800" dir="rtl">
-      {/* Header with gradient */}
-      <div className="bg-gradient-to-l from-blue-600 to-violet-600 text-white p-8 rounded-t-lg">
-        {personalInfo.fullName && (
-          <h1 className="text-2xl font-extrabold mb-1">{personalInfo.fullName}</h1>
-        )}
-        {personalInfo.title && (
-          <p className="text-sm font-medium text-blue-100 mb-3">{personalInfo.title}</p>
-        )}
-        <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-blue-100">
-          {personalInfo.email && <span className="flex items-center gap-1"><Mail className="w-3 h-3" />{personalInfo.email}</span>}
-          {personalInfo.phone && <span className="flex items-center gap-1"><Phone className="w-3 h-3" />{personalInfo.phone}</span>}
-          {personalInfo.address && <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{personalInfo.address}</span>}
+    <div style={{ fontFamily: 'Heebo, Arial, sans-serif', color: colors.slate800, direction: 'rtl', backgroundColor: colors.white }}>
+      <div style={{ background: `linear-gradient(to left, ${colors.blue600}, ${colors.violet600})`, color: colors.white, padding: '32px', borderRadius: '8px 8px 0 0' }}>
+        {personalInfo.fullName && <h1 style={{ fontSize: '24px', fontWeight: 800, margin: '0 0 4px', color: colors.white }}>{personalInfo.fullName}</h1>}
+        {personalInfo.title && <p style={{ fontSize: '14px', fontWeight: 500, color: colors.blue100, margin: '0 0 12px' }}>{personalInfo.title}</p>}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', fontSize: '11px', color: colors.blue100 }}>
+          {personalInfo.email && <span>✉ {personalInfo.email}</span>}
+          {personalInfo.phone && <span>📞 {personalInfo.phone}</span>}
+          {personalInfo.address && <span>📍 {personalInfo.address}</span>}
         </div>
       </div>
 
-      <div className="p-8">
-        {/* Summary */}
+      <div style={{ padding: '32px' }}>
         {personalInfo.summary && (
-          <div className="mb-5 bg-violet-50 rounded-xl p-4">
-            <p className="text-xs text-slate-600 leading-relaxed">{personalInfo.summary}</p>
+          <div style={{ marginBottom: '20px', backgroundColor: colors.violet50, borderRadius: '12px', padding: '16px' }}>
+            <p style={textStyle}>{personalInfo.summary}</p>
           </div>
         )}
 
-        {/* Two Column Layout */}
-        <div className="grid grid-cols-3 gap-6">
-          {/* Main Content */}
-          <div className="col-span-2">
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+          <div>
             {experience?.length > 0 && experience.some(e => e.position || e.company) && (
-              <div className="mb-5">
-                <h2 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <ExternalLink className="w-3 h-3 text-violet-600" />
-                  </div>
-                  ניסיון תעסוקתי
-                </h2>
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={sectionStyle}>{dot} ניסיון תעסוקתי</h2>
                 {experience.map((exp, idx) => {
                   if (!exp.position && !exp.company) return null
                   return (
-                    <div key={idx} className="mb-3 pr-3 border-r-2 border-violet-200">
-                      <h3 className="text-sm font-bold text-slate-800">{exp.position}</h3>
-                      <div className="flex items-center gap-2 text-xs text-slate-400">
+                    <div key={idx} style={{ marginBottom: '12px', paddingRight: '12px', borderRight: `2px solid ${colors.violet200}` }}>
+                      <p style={titleStyle}>{exp.position}</p>
+                      <div style={{ display: 'flex', gap: '8px', fontSize: '11px', color: colors.slate400 }}>
                         {exp.company && <span>{exp.company}</span>}
                         <span dir="ltr">{exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}</span>
                       </div>
-                      {exp.description && <p className="text-xs text-slate-600 mt-1">{exp.description}</p>}
+                      {exp.description && <p style={{ ...textStyle, marginTop: '4px' }}>{exp.description}</p>}
                     </div>
                   )
                 })}
@@ -360,20 +253,15 @@ export function CreativeTemplate({ data }) {
             )}
 
             {education?.length > 0 && education.some(e => e.degree || e.institution) && (
-              <div className="mb-5">
-                <h2 className="text-sm font-bold text-violet-700 mb-3 flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
-                    <ExternalLink className="w-3 h-3 text-violet-600" />
-                  </div>
-                  השכלה
-                </h2>
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={sectionStyle}>{dot} השכלה</h2>
                 {education.map((edu, idx) => {
                   if (!edu.degree && !edu.institution) return null
                   return (
-                    <div key={idx} className="mb-2 pr-3 border-r-2 border-violet-200">
-                      <h3 className="text-sm font-bold text-slate-800">{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</h3>
-                      <p className="text-xs text-slate-400">{edu.institution} {edu.startDate && `(${edu.startDate} - ${edu.endDate || ''})`}</p>
-                      {edu.description && <p className="text-xs text-slate-600 mt-1">{edu.description}</p>}
+                    <div key={idx} style={{ marginBottom: '8px', paddingRight: '12px', borderRight: `2px solid ${colors.violet200}` }}>
+                      <p style={titleStyle}>{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
+                      <p style={{ fontSize: '11px', color: colors.slate400, margin: 0 }}>{edu.institution} {edu.startDate && `(${edu.startDate} - ${edu.endDate || ''})`}</p>
+                      {edu.description && <p style={{ ...textStyle, marginTop: '4px' }}>{edu.description}</p>}
                     </div>
                   )
                 })}
@@ -381,59 +269,40 @@ export function CreativeTemplate({ data }) {
             )}
           </div>
 
-          {/* Sidebar */}
-          <div className="col-span-1 space-y-5">
+          <div>
             {skills?.length > 0 && skills.some(s => s?.trim()) && (
-              <div>
-                <h2 className="text-sm font-bold text-violet-700 mb-2">כישורים</h2>
-                <div className="flex flex-wrap gap-1.5">
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ ...sectionStyle, fontSize: '12px' }}>כישורים</h2>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                   {skills.filter(s => s?.trim()).map((skill, idx) => (
-                    <span key={idx} className="px-2 py-0.5 bg-gradient-to-l from-blue-50 to-violet-50 text-violet-700 rounded text-xs font-medium">
-                      {skill}
-                    </span>
+                    <span key={idx} style={{ padding: '2px 8px', backgroundColor: colors.violet50, color: colors.violet700, borderRadius: '4px', fontSize: '11px', fontWeight: 500 }}>{skill}</span>
                   ))}
                 </div>
               </div>
             )}
 
             {languages?.length > 0 && languages.some(l => l.language) && (
-              <div>
-                <h2 className="text-sm font-bold text-violet-700 mb-2">שפות</h2>
-                <div className="space-y-1">
-                  {languages.filter(l => l.language).map((lang, idx) => (
-                    <div key={idx} className="text-xs text-slate-600">
-                      <span className="font-semibold">{lang.language}</span>
-                      {lang.level && <span className="text-slate-400"> - {lang.level}</span>}
-                    </div>
-                  ))}
-                </div>
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ ...sectionStyle, fontSize: '12px' }}>שפות</h2>
+                {languages.filter(l => l.language).map((lang, idx) => (
+                  <div key={idx} style={{ fontSize: '11px', color: colors.slate600, marginBottom: '4px' }}>
+                    <strong>{lang.language}</strong>{lang.level && <span style={{ color: colors.slate400 }}> - {lang.level}</span>}
+                  </div>
+                ))}
               </div>
             )}
 
             {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
-              <div>
-                <h2 className="text-sm font-bold text-violet-700 mb-2">הסמכות</h2>
-                <ul className="space-y-0.5 text-xs text-slate-600">
-                  {certifications.filter(c => c?.trim()).map((cert, idx) => (
-                    <li key={idx}>• {cert}</li>
-                  ))}
-                </ul>
+              <div style={{ marginBottom: '20px' }}>
+                <h2 style={{ ...sectionStyle, fontSize: '12px' }}>הסמכות</h2>
+                {certifications.filter(c => c?.trim()).map((cert, idx) => (
+                  <div key={idx} style={{ fontSize: '11px', color: colors.slate600, marginBottom: '2px' }}>• {cert}</div>
+                ))}
               </div>
             )}
 
-            {military && (
-              <div>
-                <h2 className="text-sm font-bold text-violet-700 mb-2">שירות צבאי</h2>
-                <p className="text-xs text-slate-600">{military}</p>
-              </div>
-            )}
-
-            {volunteer && (
-              <div>
-                <h2 className="text-sm font-bold text-violet-700 mb-2">התנדבות</h2>
-                <p className="text-xs text-slate-600">{volunteer}</p>
-              </div>
-            )}
+            {military && (<div style={{ marginBottom: '20px' }}><h2 style={{ ...sectionStyle, fontSize: '12px' }}>שירות צבאי</h2><p style={textStyle}>{military}</p></div>)}
+            {volunteer && (<div style={{ marginBottom: '20px' }}><h2 style={{ ...sectionStyle, fontSize: '12px' }}>התנדבות</h2><p style={textStyle}>{volunteer}</p></div>)}
           </div>
         </div>
       </div>
@@ -445,158 +314,103 @@ export function ElegantTemplate({ data }) {
   if (!data) return null
   const { personalInfo, experience, education, skills, languages, certifications, volunteer, military } = data
 
+  const sectionStyle = { fontSize: '13px', fontWeight: 700, color: colors.emerald700, marginBottom: '8px', marginTop: '18px', display: 'flex', alignItems: 'center', gap: '8px' }
+  const textStyle = { fontSize: '12px', color: colors.slate600, lineHeight: '1.6', margin: 0 }
+  const titleStyle = { fontSize: '13px', fontWeight: 700, color: colors.slate800, margin: 0 }
+  const dot = <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: colors.emerald500, display: 'inline-block', flexShrink: 0 }}></span>
+
   return (
-    <div className="font-[Heebo,sans-serif] text-slate-800" dir="rtl">
-      {/* Header */}
-      <div className="p-8 border-b-4 border-emerald-500">
-        <div className="flex items-start justify-between">
+    <div style={{ fontFamily: 'Heebo, Arial, sans-serif', color: colors.slate800, direction: 'rtl', backgroundColor: colors.white }}>
+      <div style={{ padding: '32px', borderBottom: `4px solid ${colors.emerald500}` }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            {personalInfo.fullName && (
-              <h1 className="text-2xl font-extrabold text-slate-900">{personalInfo.fullName}</h1>
-            )}
-            {personalInfo.title && (
-              <p className="text-sm font-semibold text-emerald-600 mt-1">{personalInfo.title}</p>
-            )}
+            {personalInfo.fullName && <h1 style={{ fontSize: '24px', fontWeight: 800, color: colors.slate900, margin: 0 }}>{personalInfo.fullName}</h1>}
+            {personalInfo.title && <p style={{ fontSize: '14px', fontWeight: 600, color: colors.emerald600, margin: '4px 0 0' }}>{personalInfo.title}</p>}
           </div>
-          <div className="text-left text-xs text-slate-500 space-y-0.5">
-            {personalInfo.email && <p dir="ltr">{personalInfo.email}</p>}
-            {personalInfo.phone && <p dir="ltr">{personalInfo.phone}</p>}
-            {personalInfo.address && <p>{personalInfo.address}</p>}
+          <div style={{ textAlign: 'left', fontSize: '11px', color: colors.slate500 }}>
+            {personalInfo.email && <p style={{ margin: '0 0 2px' }} dir="ltr">{personalInfo.email}</p>}
+            {personalInfo.phone && <p style={{ margin: '0 0 2px' }} dir="ltr">{personalInfo.phone}</p>}
+            {personalInfo.address && <p style={{ margin: 0 }}>{personalInfo.address}</p>}
           </div>
         </div>
       </div>
 
-      <div className="p-8">
-        {/* Summary */}
-        {personalInfo.summary && (
-          <div className="mb-5">
-            <h2 className="text-sm font-bold text-emerald-700 mb-1.5 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              תקציר מקצועי
-            </h2>
-            <p className="text-xs text-slate-600 leading-relaxed pr-4">{personalInfo.summary}</p>
-          </div>
-        )}
+      <div style={{ padding: '32px' }}>
+        {personalInfo.summary && (<><h2 style={sectionStyle}>{dot} תקציר מקצועי</h2><p style={{ ...textStyle, paddingRight: '16px' }}>{personalInfo.summary}</p></>)}
 
-        {/* Experience */}
         {experience?.length > 0 && experience.some(e => e.position || e.company) && (
-          <div className="mb-5">
-            <h2 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              ניסיון תעסוקתי
-            </h2>
-            {experience.map((exp, idx) => {
-              if (!exp.position && !exp.company) return null
-              return (
-                <div key={idx} className="mb-3 pr-4">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-800">{exp.position}</h3>
-                      {exp.company && <p className="text-xs text-emerald-600 font-medium">{exp.company}</p>}
-                    </div>
-                    <span className="text-xs text-slate-400 bg-slate-50 px-2 py-0.5 rounded" dir="ltr">
-                      {exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}
-                    </span>
+          <><h2 style={sectionStyle}>{dot} ניסיון תעסוקתי</h2>
+          {experience.map((exp, idx) => {
+            if (!exp.position && !exp.company) return null
+            return (
+              <div key={idx} style={{ marginBottom: '12px', paddingRight: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                  <div>
+                    <p style={titleStyle}>{exp.position}</p>
+                    {exp.company && <p style={{ fontSize: '11px', color: colors.emerald600, fontWeight: 500, margin: 0 }}>{exp.company}</p>}
                   </div>
-                  {exp.description && <p className="text-xs text-slate-600 mt-1">{exp.description}</p>}
+                  <span style={{ fontSize: '11px', color: colors.slate400, backgroundColor: colors.slate50, padding: '2px 8px', borderRadius: '4px' }} dir="ltr">
+                    {exp.startDate}{(exp.startDate && (exp.endDate || exp.current)) && ' - '}{exp.current ? 'היום' : exp.endDate}
+                  </span>
                 </div>
-              )
-            })}
-          </div>
+                {exp.description && <p style={{ ...textStyle, marginTop: '4px' }}>{exp.description}</p>}
+              </div>
+            )
+          })}</>
         )}
 
-        {/* Education */}
         {education?.length > 0 && education.some(e => e.degree || e.institution) && (
-          <div className="mb-5">
-            <h2 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              השכלה
-            </h2>
-            {education.map((edu, idx) => {
-              if (!edu.degree && !edu.institution) return null
-              return (
-                <div key={idx} className="mb-2 pr-4">
-                  <div className="flex justify-between">
-                    <h3 className="text-sm font-bold text-slate-800">{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</h3>
-                    <span className="text-xs text-slate-400" dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && ' - '}{edu.endDate}</span>
-                  </div>
-                  {edu.institution && <p className="text-xs text-emerald-600 font-medium">{edu.institution}</p>}
-                  {edu.description && <p className="text-xs text-slate-600 mt-1">{edu.description}</p>}
+          <><h2 style={sectionStyle}>{dot} השכלה</h2>
+          {education.map((edu, idx) => {
+            if (!edu.degree && !edu.institution) return null
+            return (
+              <div key={idx} style={{ marginBottom: '8px', paddingRight: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <p style={titleStyle}>{edu.degree}{edu.field ? ` - ${edu.field}` : ''}</p>
+                  <span style={{ fontSize: '11px', color: colors.slate400 }} dir="ltr">{edu.startDate}{(edu.startDate && edu.endDate) && ' - '}{edu.endDate}</span>
                 </div>
-              )
-            })}
-          </div>
+                {edu.institution && <p style={{ fontSize: '11px', color: colors.emerald600, fontWeight: 500, margin: 0 }}>{edu.institution}</p>}
+                {edu.description && <p style={{ ...textStyle, marginTop: '4px' }}>{edu.description}</p>}
+              </div>
+            )
+          })}</>
         )}
 
-        {/* Bottom Grid */}
-        <div className="grid grid-cols-2 gap-6">
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px', marginTop: '16px' }}>
           {skills?.length > 0 && skills.some(s => s?.trim()) && (
             <div>
-              <h2 className="text-sm font-bold text-emerald-700 mb-2 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                כישורים
-              </h2>
-              <div className="flex flex-wrap gap-1.5 pr-4">
+              <h2 style={{ ...sectionStyle, marginTop: 0 }}>{dot} כישורים</h2>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', paddingRight: '16px' }}>
                 {skills.filter(s => s?.trim()).map((skill, idx) => (
-                  <span key={idx} className="px-2 py-0.5 bg-emerald-50 text-emerald-700 rounded text-xs font-medium border border-emerald-100">
-                    {skill}
-                  </span>
+                  <span key={idx} style={{ padding: '2px 8px', backgroundColor: colors.emerald50, color: colors.emerald700, borderRadius: '4px', fontSize: '11px', fontWeight: 500, border: `1px solid ${colors.emerald100}` }}>{skill}</span>
                 ))}
               </div>
             </div>
           )}
-
-          <div className="space-y-4">
+          <div>
             {languages?.length > 0 && languages.some(l => l.language) && (
-              <div>
-                <h2 className="text-sm font-bold text-emerald-700 mb-1.5 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  שפות
-                </h2>
-                <div className="space-y-0.5 pr-4">
-                  {languages.filter(l => l.language).map((lang, idx) => (
-                    <p key={idx} className="text-xs text-slate-600">
-                      <span className="font-semibold">{lang.language}</span>
-                      {lang.level && ` - ${lang.level}`}
-                    </p>
-                  ))}
-                </div>
+              <div style={{ marginBottom: '16px' }}>
+                <h2 style={{ ...sectionStyle, marginTop: 0 }}>{dot} שפות</h2>
+                {languages.filter(l => l.language).map((lang, idx) => (
+                  <p key={idx} style={{ fontSize: '12px', color: colors.slate600, margin: '0 0 2px', paddingRight: '16px' }}>
+                    <strong>{lang.language}</strong>{lang.level && ` - ${lang.level}`}
+                  </p>
+                ))}
               </div>
             )}
-
             {certifications?.length > 0 && certifications.some(c => c?.trim()) && (
               <div>
-                <h2 className="text-sm font-bold text-emerald-700 mb-1.5 flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                  הסמכות
-                </h2>
-                <ul className="pr-4 text-xs text-slate-600 space-y-0.5">
-                  {certifications.filter(c => c?.trim()).map((c, i) => <li key={i}>• {c}</li>)}
-                </ul>
+                <h2 style={{ ...sectionStyle, marginTop: 0 }}>{dot} הסמכות</h2>
+                {certifications.filter(c => c?.trim()).map((c, i) => (
+                  <div key={i} style={{ fontSize: '11px', color: colors.slate600, paddingRight: '16px', marginBottom: '2px' }}>• {c}</div>
+                ))}
               </div>
             )}
           </div>
         </div>
 
-        {military && (
-          <div className="mt-4">
-            <h2 className="text-sm font-bold text-emerald-700 mb-1 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              שירות צבאי
-            </h2>
-            <p className="text-xs text-slate-600 pr-4">{military}</p>
-          </div>
-        )}
-
-        {volunteer && (
-          <div className="mt-4">
-            <h2 className="text-sm font-bold text-emerald-700 mb-1 flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-              התנדבות
-            </h2>
-            <p className="text-xs text-slate-600 pr-4">{volunteer}</p>
-          </div>
-        )}
+        {military && (<><h2 style={sectionStyle}>{dot} שירות צבאי</h2><p style={{ ...textStyle, paddingRight: '16px' }}>{military}</p></>)}
+        {volunteer && (<><h2 style={sectionStyle}>{dot} התנדבות</h2><p style={{ ...textStyle, paddingRight: '16px' }}>{volunteer}</p></>)}
       </div>
     </div>
   )

@@ -1,29 +1,56 @@
 import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle } from 'docx'
 import { saveAs } from 'file-saver'
 
+function stripClasses(el) {
+  if (el.removeAttribute) {
+    el.removeAttribute('class')
+  }
+  if (el.children) {
+    for (const child of el.children) {
+      stripClasses(child)
+    }
+  }
+}
+
 export async function exportToPDF(elementId, fileName = 'cv') {
   const html2pdf = (await import('html2pdf.js')).default
   const element = document.getElementById(elementId)
-  if (!element) return
-
-  const opt = {
-    margin: [10, 10, 10, 10],
-    filename: `${fileName}.pdf`,
-    image: { type: 'jpeg', quality: 0.98 },
-    html2canvas: {
-      scale: 2,
-      useCORS: true,
-      letterRendering: true,
-      scrollY: 0,
-    },
-    jsPDF: {
-      unit: 'mm',
-      format: 'a4',
-      orientation: 'portrait',
-    },
+  if (!element) {
+    throw new Error('CV preview element not found')
   }
 
-  await html2pdf().set(opt).from(element).save()
+  const clone = element.cloneNode(true)
+  stripClasses(clone)
+  clone.style.width = '210mm'
+  clone.style.backgroundColor = '#ffffff'
+  clone.style.position = 'absolute'
+  clone.style.left = '-9999px'
+  clone.style.top = '0'
+  document.body.appendChild(clone)
+
+  try {
+    const opt = {
+      margin: [5, 5, 5, 5],
+      filename: `${fileName}.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true,
+        scrollY: 0,
+        backgroundColor: '#ffffff',
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait',
+      },
+    }
+
+    await html2pdf().set(opt).from(clone).save()
+  } finally {
+    document.body.removeChild(clone)
+  }
 }
 
 export async function exportToWord(cvData, fileName = 'cv') {

@@ -1,30 +1,37 @@
 import mammoth from 'mammoth'
 import * as pdfjsLib from 'pdfjs-dist'
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.mjs',
-  import.meta.url
-).toString()
+pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
 
 export async function parsePDF(file) {
-  const arrayBuffer = await file.arrayBuffer()
-  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-  let fullText = ''
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+    let fullText = ''
 
-  for (let i = 1; i <= pdf.numPages; i++) {
-    const page = await pdf.getPage(i)
-    const textContent = await page.getTextContent()
-    const pageText = textContent.items.map((item) => item.str).join(' ')
-    fullText += pageText + '\n'
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const page = await pdf.getPage(i)
+      const textContent = await page.getTextContent()
+      const pageText = textContent.items.map((item) => item.str).join(' ')
+      fullText += pageText + '\n'
+    }
+
+    return fullText
+  } catch (err) {
+    console.error('PDF parse error:', err)
+    throw new Error('לא ניתן לקרוא את קובץ ה-PDF. ייתכן שהקובץ מוגן או פגום.')
   }
-
-  return fullText
 }
 
 export async function parseWord(file) {
-  const arrayBuffer = await file.arrayBuffer()
-  const result = await mammoth.extractRawText({ arrayBuffer })
-  return result.value
+  try {
+    const arrayBuffer = await file.arrayBuffer()
+    const result = await mammoth.extractRawText({ arrayBuffer })
+    return result.value
+  } catch (err) {
+    console.error('Word parse error:', err)
+    throw new Error('לא ניתן לקרוא את קובץ ה-Word. ייתכן שהקובץ פגום.')
+  }
 }
 
 export function textToCvData(text) {
@@ -65,11 +72,21 @@ export function textToCvData(text) {
     }
   }
 
+  if (lines.length > 1) {
+    const titleCandidate = lines[1]
+    if (titleCandidate.length < 60 && !titleCandidate.includes('@') && !titleCandidate.match(/\d{5}/)) {
+      cvData.personalInfo.title = titleCandidate
+    }
+  }
+
   const summaryKeywords = ['תקציר', 'אודות', 'על עצמי', 'פרופיל', 'summary', 'about', 'profile', 'objective']
   const experienceKeywords = ['ניסיון', 'ניסיון תעסוקתי', 'ניסיון מקצועי', 'experience', 'work history', 'employment']
   const educationKeywords = ['השכלה', 'לימודים', 'education', 'academic']
   const skillsKeywords = ['כישורים', 'מיומנויות', 'יכולות', 'skills', 'technologies', 'טכנולוגיות']
   const languageKeywords = ['שפות', 'languages']
+  const certKeywords = ['הסמכות', 'תעודות', 'certifications', 'certificates']
+  const militaryKeywords = ['שירות צבאי', 'צבא', 'military', 'שירות לאומי']
+  const volunteerKeywords = ['התנדבות', 'volunteer']
 
   let currentSection = 'general'
   let summaryLines = []
@@ -80,26 +97,14 @@ export function textToCvData(text) {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i].toLowerCase()
 
-    if (summaryKeywords.some(k => line.includes(k))) {
-      currentSection = 'summary'
-      continue
-    }
-    if (experienceKeywords.some(k => line.includes(k))) {
-      currentSection = 'experience'
-      continue
-    }
-    if (educationKeywords.some(k => line.includes(k))) {
-      currentSection = 'education'
-      continue
-    }
-    if (skillsKeywords.some(k => line.includes(k))) {
-      currentSection = 'skills'
-      continue
-    }
-    if (languageKeywords.some(k => line.includes(k))) {
-      currentSection = 'languages'
-      continue
-    }
+    if (summaryKeywords.some(k => line.includes(k))) { currentSection = 'summary'; continue }
+    if (experienceKeywords.some(k => line.includes(k))) { currentSection = 'experience'; continue }
+    if (educationKeywords.some(k => line.includes(k))) { currentSection = 'education'; continue }
+    if (skillsKeywords.some(k => line.includes(k))) { currentSection = 'skills'; continue }
+    if (languageKeywords.some(k => line.includes(k))) { currentSection = 'languages'; continue }
+    if (certKeywords.some(k => line.includes(k))) { currentSection = 'certifications'; continue }
+    if (militaryKeywords.some(k => line.includes(k))) { currentSection = 'military'; continue }
+    if (volunteerKeywords.some(k => line.includes(k))) { currentSection = 'volunteer'; continue }
 
     switch (currentSection) {
       case 'summary':
@@ -116,12 +121,24 @@ export function textToCvData(text) {
         break
       case 'languages':
         if (lines[i].trim().length > 0) {
+          const parts = lines[i].split(/[-–:]/)
           cvData.languages.push({
             id: crypto.randomUUID(),
-            language: lines[i].trim(),
-            level: '',
+            language: parts[0]?.trim() || lines[i].trim(),
+            level: parts[1]?.trim() || '',
           })
         }
+        break
+      case 'certifications':
+        if (lines[i].trim().length > 0) {
+          cvData.certifications.push(lines[i].trim().replace(/^[•\-*]\s*/, ''))
+        }
+        break
+      case 'military':
+        cvData.military += (cvData.military ? '. ' : '') + lines[i]
+        break
+      case 'volunteer':
+        cvData.volunteer += (cvData.volunteer ? '. ' : '') + lines[i]
         break
       default:
         break
@@ -183,40 +200,14 @@ export function textToCvData(text) {
   }
 
   if (cvData.experience.length === 0) {
-    cvData.experience.push({
-      id: crypto.randomUUID(),
-      company: '',
-      position: '',
-      startDate: '',
-      endDate: '',
-      current: false,
-      description: '',
-    })
+    cvData.experience.push({ id: crypto.randomUUID(), company: '', position: '', startDate: '', endDate: '', current: false, description: '' })
   }
-
   if (cvData.education.length === 0) {
-    cvData.education.push({
-      id: crypto.randomUUID(),
-      institution: '',
-      degree: '',
-      field: '',
-      startDate: '',
-      endDate: '',
-      description: '',
-    })
+    cvData.education.push({ id: crypto.randomUUID(), institution: '', degree: '', field: '', startDate: '', endDate: '', description: '' })
   }
-
-  if (cvData.skills.length === 0) {
-    cvData.skills.push('')
-  }
-
-  if (cvData.languages.length === 0) {
-    cvData.languages.push({ id: crypto.randomUUID(), language: '', level: '' })
-  }
-
-  if (cvData.certifications.length === 0) {
-    cvData.certifications.push('')
-  }
+  if (cvData.skills.length === 0) cvData.skills.push('')
+  if (cvData.languages.length === 0) cvData.languages.push({ id: crypto.randomUUID(), language: '', level: '' })
+  if (cvData.certifications.length === 0) cvData.certifications.push('')
 
   return cvData
 }
